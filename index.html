@@ -68,9 +68,11 @@ async function run() {
             throw new Error('Ungültige URL')
         }
 
-        status.textContent = "Weiterleitung..."
+        status.textContent = "Ziel erreichbar. Weiterleitung in 3 Sekunden..."
 
-        // Direkt weiterleiten
+        // 3 Sekunden warten
+        await new Promise(resolve => setTimeout(resolve, 3000))
+
         window.location.replace(url)
 
     } catch (e) {
