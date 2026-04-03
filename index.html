@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Weiterleitung…</title>
+    <title>Verbindung wird aufgebaut…</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
@@ -24,6 +24,7 @@
             background: rgba(255,255,255,0.05);
             backdrop-filter: blur(10px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            min-width: 280px;
         }
 
         .spinner {
@@ -51,37 +52,43 @@
 <div class="card">
     <h2>Verbindung wird aufgebaut…</h2>
     <div class="spinner"></div>
-    <div class="status" id="status">Initialisiere…</div>
+    <div class="status" id="status">Warte auf gültigen Link…</div>
 </div>
 
 <script>
-async function run() {
-    const status = document.getElementById('status')
+let currentUrl = null;
 
+async function checkLink() {
     try {
-        status.textContent = "Lade Zieladresse..."
+        const res = await fetch('./link.txt?cache=' + Date.now());
+        const url = (await res.text()).trim();
 
-        const res = await fetch('./link.txt?cache=' + Date.now())
-        const url = (await res.text()).trim()
+        if (!url.startsWith('http')) return;
 
-        if (!url.startsWith('http')) {
-            throw new Error('Ungültige URL')
+        // Wenn neuer Link erkannt wird
+        if (url !== currentUrl) {
+            currentUrl = url;
+
+            document.getElementById('status').textContent =
+                "Neuer Link erkannt. Weiterleitung in 3 Sekunden…";
+
+            // 3 Sekunden warten
+            setTimeout(() => {
+                window.location.replace(url);
+            }, 3000);
         }
 
-        status.textContent = "Ziel erreichbar. Weiterleitung in 3 Sekunden..."
-
-        // 3 Sekunden warten
-        await new Promise(resolve => setTimeout(resolve, 3000))
-
-        window.location.replace(url)
-
     } catch (e) {
-        status.textContent = "Fehler. Neuer Versuch..."
-        setTimeout(run, 2000)
+        document.getElementById('status').textContent =
+            "Warte auf gültigen Link…";
     }
 }
 
-run()
+// Alle 3 Sekunden prüfen
+setInterval(checkLink, 3000);
+
+// Sofort einmal ausführen
+checkLink();
 </script>
 
 </body>
